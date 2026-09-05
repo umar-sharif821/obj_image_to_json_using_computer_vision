@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Legal Metrology compliance platform
+*.db
+*.sqlite3
+reports/
