@@ -46,7 +46,7 @@ from typing import Annotated, Any, Final, Optional
 import cv2
 from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field, ValidationError
 
 from app import __version__
@@ -228,6 +228,21 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 # --------------------------------------------------------------------------- #
 # Routes                                                                       #
 # --------------------------------------------------------------------------- #
+
+
+@app.get("/", include_in_schema=False)
+async def root() -> RedirectResponse:
+    """
+    Send the bare host to the interactive API documentation.
+
+    Every route on this service is namespaced under ``/api/v1``, so the URL
+    uvicorn prints on startup -- the one an operator actually clicks -- would
+    otherwise answer 404 and look like a broken deployment.
+
+    Returns:
+        A temporary redirect to the OpenAPI documentation.
+    """
+    return RedirectResponse(url=f"{API_PREFIX}/docs")
 
 
 @app.get(
