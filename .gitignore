@@ -221,3 +221,7 @@ __marimo__/
 *.db
 *.sqlite3
 reports/
+
+# Frontend (Node)
+node_modules/
+dist/

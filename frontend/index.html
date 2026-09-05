@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      viewport-fit=cover lets the layout extend under a phone's notch and home
+      indicator; the stylesheet pays that back with safe-area insets so no tap
+      target is ever hidden beneath the system chrome.
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0B2F5B" />
+    <meta
+      name="description"
+      content="Scan a packaged commodity label and check its mandatory declarations against the Legal Metrology (Packaged Commodities) Rules, 2011."
+    />
+
+    <!-- Installability -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="LM Scanner" />
+
+    <title>Legal Metrology Label Scanner</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      This tool needs JavaScript enabled to capture and submit label photographs.
+    </noscript>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

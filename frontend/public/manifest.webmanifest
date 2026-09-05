@@ -1,0 +1,33 @@
+{
+  "name": "Legal Metrology Label Scanner",
+  "short_name": "LM Scanner",
+  "description": "Photograph a packaged product and check its mandatory declarations against the Legal Metrology (Packaged Commodities) Rules, 2011.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef2f7",
+  "theme_color": "#0B2F5B",
+  "categories": ["government", "utilities", "productivity"],
+  "lang": "en-IN",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "legal-metrology-scanner-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Mobile-first PWA for the Legal Metrology packaged-commodity compliance scanner (SIH26034).",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.7"
+  }
+}

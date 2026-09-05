@@ -50,6 +50,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field, ValidationError
 
 from app import __version__
+from app.report_generator import build_case_reference, generate_inspection_pdf
 from app.rules_engine import RULES_ENGINE_VERSION, evaluate_compliance
 from app.schemas import ComplianceReport, EvaluationContext, ImageQualityMetrics
 from app.vision_parser import (
@@ -173,7 +174,13 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=[REQUEST_ID_HEADER],
+    # This list is authoritative: the middleware overwrites any
+    # Access-Control-Expose-Headers a route sets for itself. Content-Disposition
+    # must be here or a cross-origin fetch cannot read the PDF's filename, and
+    # the browser saves the notice under a generated name instead of its case
+    # reference -- a failure that only appears once the frontend is deployed to
+    # a different origin than the API.
+    expose_headers=[REQUEST_ID_HEADER, "Content-Disposition"],
 )
 
 
@@ -440,6 +447,83 @@ async def scan_package(
         report.compliance_score,
     )
     return report
+
+
+#: Fields ``ComplianceReport`` serialises but does not accept back. They are
+#: ``computed_field`` properties, so they appear in every response yet are
+#: absent from the validation schema -- and the model forbids extras. A client
+#: echoing a report back verbatim would therefore be rejected, so they are
+#: stripped before re-validation rather than being made writable.
+_COMPUTED_REPORT_FIELDS: Final[frozenset[str]] = frozenset(
+    {"violation_count", "critical_violation_count", "is_compliant", "is_actionable"}
+)
+
+
+@app.post(
+    f"{API_PREFIX}/report/pdf",
+    tags=["inspection"],
+    summary="Render an inspection report as a signed-off PDF notice",
+    response_class=Response,
+    responses={
+        200: {
+            "content": {"application/pdf": {}},
+            "description": "The inspection notice.",
+        },
+        422: {"model": ErrorResponse, "description": "Body is not a valid ComplianceReport."},
+    },
+)
+async def render_report_pdf(request: Request, payload: dict[str, Any]) -> Response:
+    """
+    Render a compliance report as a printable inspection notice.
+
+    Deliberately stateless: the caller posts back the report it received from
+    ``/scan`` rather than quoting an identifier. With no report store, an
+    identifier-addressed endpoint would have nothing to look up, and adding
+    persistence solely to serve a download would put every inspection -- each
+    one carrying a photograph digest and a manufacturer's name -- into a
+    database that nothing else in the system needs.
+
+    Args:
+        request: The inbound request, carrying the correlation identifier.
+        payload: A ``ComplianceReport`` as returned by ``/scan``. The four
+            computed fields it serialises are ignored if present.
+
+    Returns:
+        The PDF as an attachment.
+
+    Raises:
+        HTTPException: 422 if the body is not a valid report.
+    """
+    request_id = getattr(request.state, "request_id", "unknown")
+    cleaned = {k: v for k, v in payload.items() if k not in _COMPUTED_REPORT_FIELDS}
+
+    try:
+        report = ComplianceReport.model_validate(cleaned)
+    except ValidationError as exc:
+        raise _error(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "invalid_report",
+            f"The request body is not a valid compliance report: "
+            f"{exc.error_count()} validation error(s).",
+            remedy="Post back the report exactly as returned by /api/v1/scan.",
+        ) from exc
+
+    # ReportLab lays the document out synchronously; keep it off the loop.
+    pdf_bytes = await asyncio.to_thread(generate_inspection_pdf, report)
+
+    # The case reference contains slashes, which are not legal in a filename.
+    filename = f"{build_case_reference(report).replace('/', '-')}.pdf"
+    logger.info(
+        "Rendered notice [%s]: report=%s bytes=%d", request_id, report.report_id, len(pdf_bytes)
+    )
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        # Content-Disposition is made readable to cross-origin JavaScript by the
+        # CORS middleware's expose_headers list, not here -- a header set on the
+        # response would be overwritten by it.
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # --------------------------------------------------------------------------- #

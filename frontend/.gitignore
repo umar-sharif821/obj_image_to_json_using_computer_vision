@@ -1,0 +1,14 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Local env files may hold deployment URLs; keep the examples only.
+.env
+.env.local
+.env.*.local
+.env.production
+
+.vite/
+*.log
+.DS_Store
